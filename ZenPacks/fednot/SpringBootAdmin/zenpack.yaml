@@ -1,1 +1,269 @@
 name: ZenPacks.fednot.SpringBootAdmin
+
+zProperties:
+  zSpringBootPort:
+    category: SpringBoot
+    type: int
+    default: 8134
+  zSpringBootURI:
+    category: SpringBoot
+    type: lines
+    default:
+      - spring-boot-admin_v1/api/applications
+      - spring-boot-admin_v2/instances
+  zIVGroups:
+    category: SpringBoot
+    type: string
+  zIVUser:
+    category: SpringBoot
+    type: string
+
+class_relationships:
+  - SpringBootDevice 1:MC SpringBootAdmin
+  - SpringBootAdmin 1:MC SpringBootApplication
+  - SpringBootApplication 1:MC SpringBootComponent
+  - SpringBootApplication 1:MC SpringBootJVM
+
+classes:
+  SpringBootDevice:
+    base: [zenpacklib.Device]
+    label: SpringBoot Device
+    properties:
+      get_SBAApplications:
+        grid_display: false
+        api_only: true
+        api_backendtype: method
+
+  SpringBootAdmin:
+    base: [zenpacklib.Component]
+    label: Spring Boot Admin
+    meta_type: SpringBootAdmin
+    monitoring_templates: [SpringBootAdmin]
+    properties:
+      DEFAULTS:
+        grid_display: false
+      context:
+        label: Context
+        type: string
+
+  SpringBootApplication:
+    base: [zenpacklib.Component]
+    label: Application
+    meta_type: SpringBootApplication
+    monitoring_templates: [SpringBootApplication]
+    properties:
+      DEFAULTS:
+        grid_display: false
+      status:
+        label: Status
+        type: string
+        datapoint: health_status
+        renderer: Zenoss.render.severity
+        grid_display: true
+        label_width: 40
+      applicationID:
+        label: applicationID
+        grid_display: false
+        label_width: 100
+      applicationName:
+        label: applicationName
+        grid_display: false
+        label_width: 100
+      applicationNameID:
+        label: applicationNameID
+        grid_display: false
+        label_width: 100
+      applicationComponentID:
+        label: applicationComponentID
+        grid_display: false
+        label_width: 100
+      componentName:
+        label: componentName
+        grid_display: false
+        label_width: 30
+      mgmtURL:
+        label: Management URL
+        grid_display: false
+      healthURL:
+        label: Health URL
+        grid_display: false
+      serviceURL:
+        label: Service URL
+        grid_display: false
+      hostingServer:
+        label: Hosting Server
+        grid_display: false
+    relationships:
+      DEFAULTS:
+        grid_display: false
+
+  SpringBootComponent:
+    base: [zenpacklib.Component]
+    label: Application Component
+    monitoring_templates: [SpringBootComponent]
+    properties:
+      DEFAULTS:
+        grid_display: false
+      status:
+        label: Status
+        type: string
+        datapoint: health_status
+        renderer: Zenoss.render.severity
+        grid_display: true
+        label_width: 40
+      componentName:
+        label: componentName
+        grid_display: false
+        label_width: 30
+    relationships:
+      DEFAULTS:
+        grid_display: false
+
+  SpringBootJVM:
+    base: [zenpacklib.Component]
+    label: Application JVM
+    monitoring_templates: [SpringBootJVM]
+    properties:
+      DEFAULTS:
+        grid_display: false
+
+device_classes:
+  /Server/Linux/Applications:
+    remove: False
+    zProperties:
+      zPythonClass: ZenPacks.fednot.SpringBootAdmin.SpringBootDevice
+      zCollectorPlugins:
+        - fednot.json.SBA
+      zDeviceTemplates:
+        - Device
+      # TODO : Add more templates
+
+    templates:
+      SpringBootApplication:
+        targetPythonClass: ZenPacks.fednot.SpringBootAdmin.SpringBootApplication
+        datasources:
+          health:
+            type: Python
+            plugin_classname: ZenPacks.fednot.SpringBootAdmin.dsplugins.health.Health
+            datapoints:
+              status:
+                rrdtype: GAUGE
+
+      SpringBootComponent:
+        targetPythonClass: ZenPacks.fednot.SpringBootAdmin.SpringBootComponent
+        datasources:
+          health:
+            type: Python
+            plugin_classname: ZenPacks.fednot.SpringBootAdmin.dsplugins.health.Health
+            datapoints:
+              status:
+                rrdtype: GAUGE
+
+      SpringBootJVM:
+        targetPythonClass: ZenPacks.fednot.SpringBootAdmin.SpringBootJVM
+        datasources:
+          jvm:
+            type: Python
+            plugin_classname: ZenPacks.fednot.SpringBootAdmin.dsplugins.jvm.JVM
+            datapoints:
+              classes:
+                rrdtype: GAUGE
+              classes.loaded:
+                rrdtype: GAUGE
+              classes.unloaded:
+                rrdtype: GAUGE
+              classes_loaded_total:
+                rrdtype: GAUGE
+              mem:
+                rrdtype: GAUGE
+              mem.free:
+                rrdtype: GAUGE
+              mem.used:
+                rrdtype: GAUGE
+              mem.used_percentage:
+                rrdtype: GAUGE
+              heap.committed:
+                rrdtype: GAUGE
+              heap.used:
+                rrdtype: GAUGE
+              heap.used_percentage:
+                rrdtype: GAUGE
+              heap:
+                rrdtype: GAUGE
+              systemload.average:
+                rrdtype: GAUGE
+              threads:
+                rrdtype: GAUGE
+        graphs:
+          Classes:
+            units: classes
+            width: 1000
+            miny: 0
+            graphpoints:
+              Classes:
+                dpName: jvm_classes
+              Classes Loaded:
+                dpName: jvm_classes.loaded
+              Classes Unloaded:
+                dpName: jvm_classes.unloaded
+          Memory:
+            units: bytes
+            width: 1000
+            miny: 0
+            base: True
+            # TODO: Colors of graphpoints
+            graphpoints:
+              Memory:
+                dpName: jvm_mem
+                lineType: AREA
+              Memory Used:
+                dpName: jvm_mem.used
+                lineType: AREA
+          Memory Percentage:
+            units: percent
+            width: 1000
+            miny: 0
+            maxy: 100
+            # TODO: Colors of graphpoints
+            graphpoints:
+              Memory Used Percentage:
+                dpName: jvm_mem.used_percentage
+                lineType: AREA
+          Heap Memory:
+            units: bytes
+            width: 1000
+            miny: 0
+            base: True
+            graphpoints:
+              Heap Committed:
+                dpName: jvm_heap.committed
+                lineType: AREA
+              Heap:
+                dpName: jvm_heap
+              Heap Used:
+                dpName: jvm_heap.used
+                lineType: AREA
+          Heap Memory Percentage:
+            units: percent
+            width: 1000
+            miny: 0
+            maxy: 100
+            graphpoints:
+              Heap Used Percentage:
+                dpName: jvm_heap.used_percentage
+                lineType: AREA
+          Load:
+            units: percent
+            width: 1000
+            miny: 0
+            graphpoints:
+              System Load:
+                dpName: jvm_systemload.average
+                lineType: AREA
+          Threads:
+            units: threads
+            width: 1000
+            miny: 0
+            graphpoints:
+              Threads:
+                dpName: jvm_threads
