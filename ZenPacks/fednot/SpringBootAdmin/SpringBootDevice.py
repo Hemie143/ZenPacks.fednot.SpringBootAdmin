@@ -5,9 +5,6 @@ from . import schema
 
 class SpringBootDevice(schema.SpringBootDevice):
 
-    def test2(self):
-        return 'return of the monkeypatch'
-
     def get_SBAApplications(self):
         app_list = []
         '''

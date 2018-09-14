@@ -23,6 +23,7 @@ class_relationships:
   - SpringBootAdmin 1:MC SpringBootApplication
   - SpringBootApplication 1:MC SpringBootComponent
   - SpringBootApplication 1:MC SpringBootJVM
+  - SpringBootApplication 1:MC SpringBootJVM2
 
 classes:
   SpringBootDevice:
@@ -44,6 +45,9 @@ classes:
         grid_display: false
       context:
         label: Context
+        type: string
+      sbaVersion:
+        label: Spring Boot Admin version
         type: string
 
   SpringBootApplication:
@@ -126,6 +130,15 @@ classes:
     properties:
       DEFAULTS:
         grid_display: false
+
+  SpringBootJVM2:
+    base: [zenpacklib.Component]
+    label: Application JVM 2
+    monitoring_templates: [SpringBootJVM2]
+    properties:
+      DEFAULTS:
+        grid_display: false
+
 
 device_classes:
   /Server/Linux/Applications:
@@ -259,6 +272,120 @@ device_classes:
             graphpoints:
               System Load:
                 dpName: jvm_systemload.average
+                lineType: AREA
+          Threads:
+            units: threads
+            width: 1000
+            miny: 0
+            graphpoints:
+              Threads:
+                dpName: jvm_threads
+
+      SpringBootJVM2:
+        targetPythonClass: ZenPacks.fednot.SpringBootAdmin.SpringBootJVM2
+        datasources:
+          jvm:
+            type: Python
+            plugin_classname: ZenPacks.fednot.SpringBootAdmin.dsplugins.jvm.JVM2
+            datapoints:
+              classes.loaded:
+                rrdtype: GAUGE
+              classes.unloaded:
+                rrdtype: GAUGE
+              mem:
+                rrdtype: GAUGE
+              mem.free:
+                rrdtype: GAUGE
+              mem.used:
+                rrdtype: GAUGE
+              mem.used_percentage:
+                rrdtype: GAUGE
+              heap.committed:
+                rrdtype: GAUGE
+              heap.used:
+                rrdtype: GAUGE
+              heap.used_percentage:
+                rrdtype: GAUGE
+              process.cpu.usage:
+                rrdtype: GAUGE
+              process.files.max:
+                rrdtype: GAUGE
+              process.files.open:
+                rrdtype: GAUGE
+              threads:
+                rrdtype: GAUGE
+        graphs:
+          Classes:
+            units: classes
+            width: 1000
+            miny: 0
+            graphpoints:
+              Classes Loaded:
+                dpName: jvm_classes.loaded
+              Classes Unloaded:
+                dpName: jvm_classes.unloaded
+          Memory:
+            units: bytes
+            width: 1000
+            miny: 0
+            base: True
+            # TODO: Colors of graphpoints
+            graphpoints:
+              Memory:
+                dpName: jvm_mem
+                lineType: AREA
+              Memory Used:
+                dpName: jvm_mem.used
+                lineType: AREA
+          Memory Percentage:
+            units: percent
+            width: 1000
+            miny: 0
+            maxy: 100
+            # TODO: Colors of graphpoints
+            graphpoints:
+              Memory Used Percentage:
+                dpName: jvm_mem.used_percentage
+                lineType: AREA
+          Heap Memory:
+            units: bytes
+            width: 1000
+            miny: 0
+            base: True
+            graphpoints:
+              Heap Committed:
+                dpName: jvm_heap.committed
+                lineType: AREA
+              Heap Used:
+                dpName: jvm_heap.used
+                lineType: AREA
+          Heap Memory Percentage:
+            units: percent
+            width: 1000
+            miny: 0
+            maxy: 100
+            graphpoints:
+              Heap Used Percentage:
+                dpName: jvm_heap.used_percentage
+                lineType: AREA
+          Process Load:
+            units: percent
+            width: 1000
+            miny: 0
+            graphpoints:
+              Process Load:
+                dpName: jvm_process.cpu.usage
+                lineType: AREA
+          Process Files Open:
+            units: percent
+            width: 1000
+            miny: 0
+            graphpoints:
+              Process Files Open:
+                dpName: jvm_process.files.open
+                lineType: AREA
+              Process Files Max:
+                dpName: jvm_process.files.max
                 lineType: AREA
           Threads:
             units: threads

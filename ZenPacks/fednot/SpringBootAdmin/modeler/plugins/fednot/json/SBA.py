@@ -28,10 +28,6 @@ class SBA(PythonPlugin):
 
     deviceProperties = PythonPlugin.deviceProperties + requiredProperties
 
-    queries = [
-        ['sba', 'http://{}:{}/{}'],
-    ]
-
     @staticmethod
     def add_tag(result, label):
         return tuple((label, result))
@@ -57,7 +53,6 @@ class SBA(PythonPlugin):
         # TODO: remove loop
         for uri in uris:
             url = 'http://{}:{}/{}'.format(ip_address, port, uri)
-            log.debug('SBA collect url: {}'.format(url))
             d = sem.run(getPage, url,
                         headers={
                             "Accept": "application/json",
@@ -97,7 +92,7 @@ class SBA(PythonPlugin):
                 result_data[result[0]] = content
 
         # sba_data = result_data.get('sba', '')
-        # log.debug('result_data: {}'.format(result_data))
+        log.debug('AAA result_data: {}'.format(result_data))
 
         sba_maps = []
         rm = []
@@ -112,9 +107,12 @@ class SBA(PythonPlugin):
             om_sba.id = self.prepId('sba_{}'.format(context))
             om_sba.title = sba_label
             om_sba.context = context
+            if 'endpoints' in sba_data[0]:
+                om_sba.sbaVersion = '2'
+            else:
+                om_sba.sbaVersion = '1'
             sba_maps.append(om_sba)
             component_sba = 'springBootAdmins/{}'.format(om_sba.id)
-            log.debug('AAA component_sba: {}'.format(component_sba))
             app_maps = []
             for app in sba_data:
                 # Modeling of Applications
@@ -128,7 +126,6 @@ class SBA(PythonPlugin):
                 app_label = app_info.get('name', '')
                 app_name = app_label.lower().replace(' ', '_')
                 app_id = app.get('id', '')
-                log.debug('app_label: {}'.format(app_label))
                 om_app.id = self.prepId('app_{}_{}'.format(app_name, app_id))
                 om_app.applicationComponentID = om_app.id                   # to be inherited
                 om_app.applicationName = app_label
@@ -146,22 +143,18 @@ class SBA(PythonPlugin):
 
                 applicationNameID = '{}_{}'.format(app_label.lower().replace(' ', '_'), app_id)
                 component_app = '{}/springBootApplications/{}'.format(component_sba, om_app.id)
-                log.debug('AAA component_app: {}'.format(component_app))
 
                 # Modeling of Application Components
                 app_status = app.get('statusInfo', '')
                 app_details = app_status.get('details', '')
-                log.debug('app: {}'.format(app_details))
                 comp_maps = []
                 for comp_name in app_details:
-                    log.debug('comp_name: {}'.format(comp_name))
                     if comp_name == 'status':
                         continue
                     om_comp = ObjectMap()
                     om_comp.id = self.prepId('comp_{}_{}'.format(applicationNameID, comp_name))
                     om_comp.title = '{} ({} on {})'.format(comp_name, app_label, server)
                     om_comp.componentName = comp_name
-                    log.debug('om_comp: {}'.format(om_comp))
                     comp_maps.append(om_comp)
 
                 rm_comp.append(RelationshipMap(relname='springBootComponents',
@@ -173,10 +166,16 @@ class SBA(PythonPlugin):
                 om_jvm = ObjectMap()
                 om_jvm.id = self.prepId('jvm_{}'.format(applicationNameID))
                 om_jvm.title = 'JVM ({} on {})'.format(app_label, server)
-                rm_jvm.append(RelationshipMap(relname='springBootJVMs',
-                                              modname='ZenPacks.fednot.SpringBootAdmin.SpringBootJVM',
-                                              compname=component_app,
-                                              objmaps=[om_jvm]))
+                if om_sba.sbaVersion == '1':
+                    rm_jvm.append(RelationshipMap(relname='springBootJVMs',
+                                                  modname='ZenPacks.fednot.SpringBootAdmin.SpringBootJVM',
+                                                  compname=component_app,
+                                                  objmaps=[om_jvm]))
+                elif om_sba.sbaVersion == '2':
+                    rm_jvm.append(RelationshipMap(relname='springBootJVM2s',
+                                                  modname='ZenPacks.fednot.SpringBootAdmin.SpringBootJVM2',
+                                                  compname=component_app,
+                                                  objmaps=[om_jvm]))
 
 
             rm_app.append(RelationshipMap(relname='springBootApplications',
